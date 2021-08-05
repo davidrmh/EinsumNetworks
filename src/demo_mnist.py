@@ -5,6 +5,10 @@ from EinsumNetwork import Graph, EinsumNetwork
 import datasets
 import utils
 
+#ADDED
+from torchvision.transforms import ToTensor
+import torchvision
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 demo_text = """
@@ -58,11 +62,57 @@ if exponential_family == EinsumNetwork.CategoricalArray:
 if exponential_family == EinsumNetwork.NormalArray:
     exponential_family_args = {'min_var': 1e-6, 'max_var': 0.1}
 
-# get data
+# get data (NOT WORKING)
+#if fashion_mnist:
+#    train_x, train_labels, test_x, test_labels = datasets.load_fashion_mnist()
+#else:
+#    train_x, train_labels, test_x, test_labels = datasets.load_mnist()
+
+# SOLUTION
+def get_img_label(dataset):
+    n_obs = len(dataset)
+    
+    imgs = torch.zeros(n_obs, 28 * 28)
+    labels = torch.zeros(n_obs)
+    
+    for i in range(n_obs):
+        img, label = dataset[i]
+        imgs[i, :] = img.reshape(28 * 28)
+        labels[i] = label
+    #TO NUMPY JUST TO MAKE IT COMPATIBLE
+    #WITH SOME CODE THAT APPEARS BELOW
+    return imgs.numpy(), labels.numpy()
+        
 if fashion_mnist:
-    train_x, train_labels, test_x, test_labels = datasets.load_fashion_mnist()
+    training_data = torchvision.datasets.FashionMNIST(
+        root = "./data",
+        train = True,
+        download = True,
+        transform = ToTensor()
+        )
+    test_data = torchvision.datasets.FashionMNIST(
+        root = "./data",
+        train = False,
+        download = True,
+        transform = ToTensor()
+        )
+    train_x, train_labels = get_img_label(training_data)
+    test_x, test_labels = get_img_label(test_data)
 else:
-    train_x, train_labels, test_x, test_labels = datasets.load_mnist()
+    training_data = torchvision.datasets.MNIST(
+        root = "./data",
+        train = True,
+        download = True,
+        transform = ToTensor()
+        )
+    test_data = torchvision.datasets.MNIST(
+        root = "./data",
+        train = False,
+        download = True,
+        transform = ToTensor()
+        )
+    train_x, train_labels = get_img_label(training_data)
+    test_x, test_labels = get_img_label(test_data)
 
 if not exponential_family != EinsumNetwork.NormalArray:
     train_x /= 255.
